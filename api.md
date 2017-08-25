@@ -30,13 +30,13 @@ The underlying XPCOM interface that represents an individual entry in the login/
 
 Field name | Description
 --- | ---
-origin | The Origin to which the login applies, formatted as a URL (for example, "http://www.site.com"). A port number (":123") may be appended.
-formSubmitURL | The URL a form-based login was submitted to. For logins obtained from HTML forms, this field is the action attribute from the form element, with the path removed (for example, "http://www.site.com"). Forms with no action attribute default to submitting to their origin URL, so that is stored here. This field is null for logins attained from protocol authentications.
+origin | The Origin to which the login applies (for example, "https://www.site.com" or "https://example.com:8443", see RFC 6454).
+formSubmitURL | The URL that the login was submitted to. In an HTML form, this field is the origin of the action attribute from the form, with the path removed (for example, "https://www.site.com"). Forms with no action attribute default to submitting to the page origin. This field is `null` for HTTP logins.
 realm | The HTTP Realm for which the login was requested. When an HTTP server sends a 401 result, the WWW-Authenticate header includes a realm to identify the "protection space." See RFC 2617. If the result did not include a realm, or it was blank, the origin is used instead. For logins obtained from HTML forms, this field is null.
 username | The username for the login.
 password | The password for the login.
-usernameField | The name attribute for the username input in a form.
-passwordField | The name attribute for the password input in a form.
+usernameField | The name attribute for the username input in a form.  This field is absent for HTTP authentication.
+passwordField | The name attribute for the password input in a form.  This field is absent for HTTP authentication.
 
 ### API methods
 
@@ -46,6 +46,6 @@ The methods under browser.logins are:
 
 Method Name | Description
 --- | ---
-`search(options)` | Search for saved logins/passwords.  The options parameter is a javascript object containing any of the properties from a LoginInfo object.  This method returns a promise that resolves to an array of LoginInfo objects, where each object in the array is both available to this extension as detailed in the Permissions section above, and matches all the properties passed in options.  This method does not perform any wildcard or range matching, it simply does literal matches on individual fields.  Note that if options is an empty object, then all records will trivially match so all records that match the extension’s host permissions will be returned.<br>Example use (inside an async Task):<br> ```let info = yield browser.logins.search({origin: “https://www.youtube.com/”});```
+`search(options)` | Search for saved logins/passwords.  The options parameter is a javascript object containing any of the properties from a LoginInfo object.  This method returns a promise that resolves to an array of LoginInfo objects, where each object in the array is both available to this extension as detailed in the Permissions section above, and matches all the properties passed in options.  This method does not perform any wildcard or range matching, it simply does literal matches on individual fields.  Note that if options is an empty object, then all records will trivially match so all records that match the extension’s host permissions will be returned.<br>Example use (inside an async Task):<br> ```let info = yield browser.logins.search({origin: “https://www.youtube.com”});```
 `store(info)` | Store a record in the login manager.  The info parameter must be a LoginInfo object as detailed in the above secion.  If there is an existing record with the same `origin`, `formSubmitURL`, and `realm` as those supplied in the argument, the existing record is updated to the supplied values, otherwise a new record is created.  Returns a promise that resolves when the record has been stored (or rejects upon any error).
 `remove(options)` | Remove existing records from the login manager.  The options parameter is treated just like in the `search()` method.  All matching records are removed from the login manager database (subject to the same permissions constraints as `search()`).  Returns a promise that resolves when all matching records have been removed (or rejects upon any error).  Note that if the supplied `options` match multiple records and there is an error, it is not possible to tell what record caused the error -- callers that want to remove multiple records but catch individual errors should call `remove()` once for each record, providing the complete record in each call.
